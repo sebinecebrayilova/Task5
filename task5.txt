@@ -1,0 +1,42 @@
+import requests
+from bs4 import BeautifulSoup
+
+# Məhsulların olduğu səhifənin URL-i
+url = "https://www.lcwaikiki.com/az-AZ/AZ/erkek/gomlek"  # kişi köynəkləri səhifəsi
+
+# Başlıq (user-agent) əlavə edirik ki, sayt bizi bloklamasın
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
+}
+
+# Sorğu göndəririk
+response = requests.get(url, headers=headers)
+
+# Əgər sorğu uğurludursa davam edirik
+if response.status_code == 200:
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Bütün məhsul kartlarını tapırıq
+    products = soup.find_all('div', class_='product-card')
+
+    for product in products:
+        # Məhsul adı
+        title_tag = product.find('a', class_='product-card__link')
+        title = title_tag.get('title') if title_tag else 'Ad tapılmadı'
+
+        # Məhsul linki
+        link = "https://www.lcwaikiki.com" + title_tag.get('href') if title_tag else 'Link tapılmadı'
+
+        # Məhsul qiyməti
+        price_tag = product.find('span', class_='product-price__new-price')
+        if not price_tag:  # Bəzi məhsullarda köhnə qiymət ola bilər
+            price_tag = product.find('span', class_='product-price__old-price')
+        price = price_tag.text.strip() if price_tag else 'Qiymət tapılmadı'
+
+        # Çap edirik
+        print(f"Məhsul: {title}")
+        print(f"Qiymət: {price}")
+        print(f"Link: {link}\n")
+
+else:
+    print(f"Sayta qoşula bilmədik. Status kodu: {response.status_code}")
